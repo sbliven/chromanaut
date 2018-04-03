@@ -6,12 +6,14 @@
   "scripts": {
     "build": "tsc",
     "watch": "tsc -watch",
+    "clean": "rm -rf build web/colorexplorer.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "Spencer Bliven",
   "license": "LGPL-3.0",
   "devDependencies": {
-    "typescript": "^2.8.1"
+    "amd": "0.0.0",
+    "typescript": "^2.8.1",
   },
   "dependencies": {}
 }
