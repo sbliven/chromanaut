@@ -3,6 +3,8 @@
 //import {ColorSpace} from "./colorspace";
 
 class CubeSpace implements ColorSpace<Color3> {
+    name: string = "cube";
+    
     toXYZ(color: Color3 | null): Color3 | null {
         if(color == null) {return null;}
         // Round all values to 0 or 1
@@ -19,6 +21,6 @@ class CubeSpace implements ColorSpace<Color3> {
                  xyz[2] < 0.5 ? 0 : 1
                ];
     }
-
 }
 
+colorspaces[CubeSpace.name] = new CubeSpace();

@@ -27,7 +27,7 @@
             
             <div class="row">
                 <div class="col">
-                    <canvas id="myCanvas" width="200" height="100"
+                    <canvas id="myCanvas" width="400" height="200"
 style="border:1px solid #000000;">
 </canvas>
                 </div>
@@ -44,7 +44,8 @@ $(document).ready( function() {
     redImage( document.getElementById("testImage1"));
     //drawRainbow( document.getElementById("myCanvas"));
     let canvas = document.getElementById("myCanvas");
-    let view = new Viewport();
+    let space = colorspaces[IdentitySpace.name];
+    let view = new Viewport(space.fromXYZ, [0,0,0], 0, 1);
     view.display(canvas);
 });
         </script>
