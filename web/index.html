@@ -39,6 +39,18 @@ style="border:1px solid #000000;">
                     </canvas>
                 </div>
             </div>
+            <div class="row">
+                <form>
+                    <div class="col">
+                        <label for="axis1">R</label>
+                        <input type="text" name="axis1" id="axis1" value="0" size="4"></input>
+                        <label for="axis2">G</label>
+                        <input type="text" name="axis2" id="axis2" value="0" size="4"></input>
+                        <label for="axis3">B</label>
+                        <input type="text" name="axis3" id="axis3" value="0" size="4"></input>
+                    </div>
+                </form>
+            </div>
         </div>
 
         
@@ -57,6 +69,12 @@ $(document).ready( function() {
     let canvas1 = document.getElementById("colorpicker1d");
     let view1 = new ColorStrip(space.fromXYZ, [0,0,0], 2);
     view1.display(canvas1);
+    canvas2.addEventListener('mousemove', function(e) {
+        //console.log("Moved to " + e.offsetX + ", " + e.offsetY);
+        $("#axis1").val(e.offsetX);
+        $("#axis2").val(e.offsetY);
+    });
+    canvas2.addEventListener('click', function(e) {console.log("clicked at " + e.offsetX + ", " + e.offsetY)});
 });
         </script>
     </body>
