@@ -24,7 +24,11 @@
 //    }
 //}
 
-class Viewport<C extends Color> {
+interface Viewport<C extends Color> {
+    display(canvas: HTMLCanvasElement): void;
+}
+
+class ColorSlice<C extends Color> implements Viewport<C>{
     //axisSpace: ColorSpace<C>;
     xaxis: number;
     yaxis: number;
@@ -34,11 +38,6 @@ class Viewport<C extends Color> {
                  xaxis?: number, yaxis?: number) {
         this.xaxis = xaxis != undefined ? xaxis : 0;
         this.yaxis = yaxis != undefined ? yaxis : 1;
-        
-        let c: Color3 = [1,1,1];
-        let d: Color = c;
-        let e: number[] = d.slice();
-        e.slice();
     }
 
     display(canvas: HTMLCanvasElement): void {
@@ -80,4 +79,47 @@ class Viewport<C extends Color> {
 //        return randomColor3();
 //    }
     
+}
+
+class ColorStrip<C extends Color> implements Viewport<C> {
+    axis: number;
+    orientation: "vertical" | "horizontal";
+    
+    constructor(private axisSpace: ColorMapping<C, Color3>, public setpoint: C,
+                 axis?: number, orientation?: "vertical" | "horizontal") {
+        this.axis = axis != undefined ? axis : 0;
+        this.orientation = orientation || "horizontal";
+    }
+
+    display(canvas: HTMLCanvasElement): void {
+        let ctx: CanvasRenderingContext2D | null= canvas.getContext("2d");
+        if(ctx != null) {
+            let imgdata: ImageData = ctx.getImageData(0,0, canvas.width, canvas.height);
+            let data: Uint8ClampedArray = imgdata.data;
+            let coord: C = this.setpoint.slice() as C; // clone
+            for(let y=0; y< canvas.height; y++){
+                for(let x=0; x<canvas.width; x++){
+                    let frac = this.orientation == "vertical" ? 1-y/canvas.height : x/canvas.width;
+                    coord[this.axis] = frac;
+                    
+                    let color = this.axisSpace(coord);
+                    
+                    let pos = (y*canvas.width + x) * 4;
+                    if( color != null) {
+                        data[pos  ] = color[0]*256;
+                        data[pos+1] = color[1]*256;
+                        data[pos+2] = color[2]*256;
+                        data[pos+3] = 255;
+                    } else {
+                        // null color -> translucent
+                        data[pos  ] = 256;
+                        data[pos+1] = 256;
+                        data[pos+2] = 256;
+                        data[pos+3] = 0;
+                    }
+                }
+            }
+            ctx.putImageData(imgdata, 0,0);
+        }
+    }
 }

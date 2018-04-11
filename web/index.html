@@ -27,9 +27,16 @@
             
             <div class="row">
                 <div class="col">
-                    <canvas id="myCanvas" width="400" height="200"
+                    <canvas id="colorpicker2d" width="400" height="200"
 style="border:1px solid #000000;">
-</canvas>
+                    </canvas>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col">
+                    <canvas id="colorpicker1d" width="400" height="10"
+style="border:1px solid #000000;">
+                    </canvas>
                 </div>
             </div>
         </div>
@@ -43,10 +50,13 @@ style="border:1px solid #000000;">
 $(document).ready( function() {
     redImage( document.getElementById("testImage1"));
     //drawRainbow( document.getElementById("myCanvas"));
-    let canvas = document.getElementById("myCanvas");
+    let canvas2 = document.getElementById("colorpicker2d");
     let space = colorspaces[IdentitySpace.name];
-    let view = new Viewport(space.fromXYZ, [0,0,0], 0, 1);
-    view.display(canvas);
+    let view2 = new ColorSlice(space.fromXYZ, [0,0,0], 0, 1);
+    view2.display(canvas2);
+    let canvas1 = document.getElementById("colorpicker1d");
+    let view1 = new ColorStrip(space.fromXYZ, [0,0,0], 2);
+    view1.display(canvas1);
 });
         </script>
     </body>
