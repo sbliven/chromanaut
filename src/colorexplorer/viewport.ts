@@ -25,35 +25,41 @@
 //}
 
 interface Viewport<C extends Color> {
-    display(canvas: HTMLCanvasElement): void;
+    update(): void;
 }
 
 class ColorSlice<C extends Color> implements Viewport<C>{
-    //axisSpace: ColorSpace<C>;
     xaxis: number;
     yaxis: number;
     //setpoint: C;
+    //private axisSpace: ColorMapping<C, Color3>,
 
-    constructor(private axisSpace: ColorMapping<C, Color3>, public setpoint: C,
-                 xaxis?: number, yaxis?: number) {
+    constructor(private model: VisualizerSpace<C>,
+                 private canvas: HTMLCanvasElement,
+                 xaxis?: number, yaxis?: number,
+                public aesthetics?: any) {
         this.xaxis = xaxis != undefined ? xaxis : 0;
         this.yaxis = yaxis != undefined ? yaxis : 1;
+        
+        model.addEventListener("colorselected", this.update.bind(this));
+        this.update();
     }
+    
 
-    display(canvas: HTMLCanvasElement): void {
-        let ctx: CanvasRenderingContext2D | null= canvas.getContext("2d");
+    update(): void {
+        let ctx: CanvasRenderingContext2D | null = this.canvas.getContext("2d");
         if(ctx != null) {
-            let imgdata: ImageData = ctx.getImageData(0,0, canvas.width, canvas.height);
+            let imgdata: ImageData = ctx.getImageData(0,0, this.canvas.width, this.canvas.height);
             let data: Uint8ClampedArray = imgdata.data;
-            let coord: C = this.setpoint.slice() as C; // clone
-            for(let y=0; y< canvas.height; y++){
-                for(let x=0; x<canvas.width; x++){
-                    coord[this.xaxis] = x/canvas.width;
-                    coord[this.yaxis] = 1-y/canvas.height;
+            let coord: C = this.model.selection.slice() as C; // clone
+            for(let y=0; y< this.canvas.height; y++){
+                for(let x=0; x<this.canvas.width; x++){
+                    coord[this.xaxis] = x/this.canvas.width;
+                    coord[this.yaxis] = 1-y/this.canvas.height;
                     
-                    let color = this.axisSpace(coord);
+                    let color = this.model.getRGB(coord);
                     
-                    let pos = (y*canvas.width + x) * 4;
+                    let pos = (y*this.canvas.width + x) * 4;
                     if( color != null) {
                         data[pos  ] = color[0]*256;
                         data[pos+1] = color[1]*256;
@@ -85,26 +91,33 @@ class ColorStrip<C extends Color> implements Viewport<C> {
     axis: number;
     orientation: "vertical" | "horizontal";
     
-    constructor(private axisSpace: ColorMapping<C, Color3>, public setpoint: C,
-                 axis?: number, orientation?: "vertical" | "horizontal") {
+    constructor(private model: VisualizerSpace<C>,
+                 private canvas: HTMLCanvasElement,
+                 axis?: number,
+                 orientation?: "vertical" | "horizontal",
+                 public aesthetics?: any) {
         this.axis = axis != undefined ? axis : 0;
         this.orientation = orientation || "horizontal";
+        
+        model.addEventListener("colorselected", this.update.bind(this));
+        this.update();
+
     }
 
-    display(canvas: HTMLCanvasElement): void {
-        let ctx: CanvasRenderingContext2D | null= canvas.getContext("2d");
+    update(): void {
+        let ctx: CanvasRenderingContext2D | null= this.canvas.getContext("2d");
         if(ctx != null) {
-            let imgdata: ImageData = ctx.getImageData(0,0, canvas.width, canvas.height);
+            let imgdata: ImageData = ctx.getImageData(0,0, this.canvas.width, this.canvas.height);
             let data: Uint8ClampedArray = imgdata.data;
-            let coord: C = this.setpoint.slice() as C; // clone
-            for(let y=0; y< canvas.height; y++){
-                for(let x=0; x<canvas.width; x++){
-                    let frac = this.orientation == "vertical" ? 1-y/canvas.height : x/canvas.width;
+            let coord: C = this.model.selection.slice() as C; // clone
+            for(let y=0; y< this.canvas.height; y++){
+                for(let x=0; x<this.canvas.width; x++){
+                    let frac = this.orientation == "vertical" ? 1-y/this.canvas.height : x/this.canvas.width;
                     coord[this.axis] = frac;
                     
-                    let color = this.axisSpace(coord);
+                    let color = this.model.getRGB(coord);
                     
-                    let pos = (y*canvas.width + x) * 4;
+                    let pos = (y*this.canvas.width + x) * 4;
                     if( color != null) {
                         data[pos  ] = color[0]*256;
                         data[pos+1] = color[1]*256;

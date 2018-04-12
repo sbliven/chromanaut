@@ -9,7 +9,7 @@ type EventTypes = "colorselected";
  * @param C Specifies which vector space is used to represent colors (eg Color3)
  */
 class VisualizerSpace<C extends Color> implements EventTarget {
-    private _selected: C;
+    private _selection: C;
     
     // EventTarget function declarations
     addEventListener: (type: EventTypes, listener: EventListenerOrEventListenerObject | null,
@@ -19,10 +19,10 @@ class VisualizerSpace<C extends Color> implements EventTarget {
                          options?: EventListenerOptions | boolean) => void;
     
     /**
-     * @param selected Initial selected color
+     * @param selection Initial selected color
      */
-    constructor(selected: C) {
-        this._selected = selected;
+    constructor(selection: C) {
+        this._selection = selection;
         
         // Create a DOM EventTarget object
         var target: Text = document.createTextNode("");
@@ -34,24 +34,32 @@ class VisualizerSpace<C extends Color> implements EventTarget {
 
     }
     
-    get selected(): C {
-        return this._selected;
+    get selection(): C {
+        return this._selection;
     }
-    set selected(color: C) {
-        if(color != this._selected) {
-            let oldsel = this._selected;
-            this._selected = color;
+    set selection(color: C) {
+        if(color != this._selection) {
+            let oldsel = this._selection;
+            this._selection = color;
             let evt = new CustomEvent("colorselected", {
-                "detail": {"selected": color, "previous": oldsel}
+                "detail": {"color": color, "oldcolor": oldsel}
             });
             this.dispatchEvent(evt);
         }
+    }
+    
+    getRGB(color: C | null): Color3 | null {
+        if( color === null) {
+            return null;
+        }
+        return color.slice(0, 3) as Color3;
+        
     }
 }
 //let v = new VisualizerSpace([0,.5,1]);
 //v.addEventListener("colorselected",
 //(ev: Event) => {
 //    let e = ev as CustomEvent;
-//    console.log("New: "+e.detail.selected+" Old: "+e.detail.previous);
+//    console.log("New: "+e.detail.color+" Old: "+e.detail.oldcolor);
 //});
-//v.selected = [1,1,1];
+//v.selection = [1,1,1];
