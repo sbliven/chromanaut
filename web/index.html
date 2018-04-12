@@ -3,10 +3,10 @@
     <head>
         <title>Color Explorer</title>
         
-        <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
+        <link rel="stylesheet" href="assets/css/bootstrap.min.css" />
 
         
-        <link rel="stylesheet" href="colorexplorer.css" />
+        <link rel="stylesheet" href="assets/css/colorexplorer.css" />
         
         <script src="colorexplorer.js"></script>
     </head>
@@ -41,10 +41,9 @@ style="border:1px solid #000000;">
         </div>
 
         
-        <script src="https://code.jquery.com/jquery-3.2.1.slim.min.js" integrity="sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN" crossorigin="anonymous"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js" integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q" crossorigin="anonymous"></script>
-<script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js" integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl" crossorigin="anonymous"></script>
-
+        <script src="assets/js/jquery-3.3.1.slim.min.js"></script>
+        <script src="assets/js/popper.min.js"></script>
+        <script src="assets/js/bootstrap.min.js" ></script>
         <script>
 var picker = null;
 $(document).ready( function() {
@@ -53,12 +52,38 @@ $(document).ready( function() {
     
     picker = rgbPicker(canvas1, canvas2);
     
-//    canvas2.addEventListener('mousemove', function(e) {
-//        //console.log("Moved to " + e.offsetX + ", " + e.offsetY);
-//        $("#axis1").val(e.offsetX);
-//        $("#axis2").val(e.offsetY);
-//    });
-//    canvas2.addEventListener('click', function(e) {console.log("clicked at " + e.offsetX + ", " + e.offsetY)});
+    picker.space.addEventListener('colorselected', function(e) {
+        let color = e.detail.color;
+        $("#axis1").val(color[0]);
+        $("#axis2").val(color[1]);
+        $("#axis3").val(color[2]);
+    });
+    
+    function parseColor(colorStr) {
+        let color = colorStr.map(parseFloat);
+        if( color.findIndex(isNaN) < 0 ) {
+            return color;
+        } else {
+            return null;
+        }
+    }
+    function updateColorFromForm(evt) {
+        let colorStr = [
+            $("#axis1").val(),
+            $("#axis2").val(),
+            $("#axis3").val()
+        ];
+        let color = parseColor(colorStr);
+        if( color ) {
+            picker.space.selection = color;
+        }
+    }
+    
+    $("#axis1").on('change', updateColorFromForm);
+    $("#axis2").on('change', updateColorFromForm);
+    $("#axis3").on('change', updateColorFromForm);
+    
+
 });
         </script>
     </body>
