@@ -43,6 +43,9 @@ class ColorSlice<C extends Color> implements Viewport<C>{
         
         model.addEventListener("colorselected", this.update.bind(this));
         this.update();
+        
+        canvas.addEventListener('mousemove', this.moveHandler.bind(this));
+        canvas.addEventListener('click', this.clickHandler.bind(this));
     }
     
 
@@ -51,11 +54,9 @@ class ColorSlice<C extends Color> implements Viewport<C>{
         if(ctx != null) {
             let imgdata: ImageData = ctx.getImageData(0,0, this.canvas.width, this.canvas.height);
             let data: Uint8ClampedArray = imgdata.data;
-            let coord: C = this.model.selection.slice() as C; // clone
             for(let y=0; y< this.canvas.height; y++){
                 for(let x=0; x<this.canvas.width; x++){
-                    coord[this.xaxis] = x/this.canvas.width;
-                    coord[this.yaxis] = 1-y/this.canvas.height;
+                    let coord = this.colorFromPos(x,y);
                     
                     let color = this.model.getRGB(coord);
                     
@@ -78,13 +79,64 @@ class ColorSlice<C extends Color> implements Viewport<C>{
         }
     }
     
-//    /**
-//     * gets a color in sRGB
-//     */
-//    getColor(coord: C): Color3 | null {
-//        return randomColor3();
-//    }
-    
+    /**
+     * Convert a visualizationSpace color to a pixel coordinate.
+     * This is the inverse of colorFromPos.
+     *
+     * With the default aesthetics, colors start with (0,0,*) in the bottom left
+     * and (1,1,*) in the top right (ignoring axes orthogonal to this slice).
+     * Pixels start with 0,0 in the top left and go to (width, height).
+     *
+     * @param color
+     * @return x, y pixel coordinate
+     */
+    posFromColor(color: C): [number, number] | null {
+        let x = Math.floor(color[this.xaxis] * this.canvas.width);
+        let y = Math.floor((1 - color[this.yaxis]) * this.canvas.width);
+        return [x,y];
+    }
+    /**
+     * Converts a pixel coordinate to a visualizationSpace color
+     * This is the inverse of posFromColor
+     *
+     * Pixels start with 0,0 in the top left and go to (width, height)
+     * With the default aesthetics, colors start with (0,0,*) in the bottom left
+     * and (1,1,*) in the top right.
+     *
+     * @param x pixel column index in [0, width)
+     * @param y pixel row index in [0, height)
+     * @return a color, with axes orthogonal to this slice taken from the selected color
+     */
+    colorFromPos(x: number, y: number): C | null {
+        let coord: C = this.model.selection.slice() as C; // clone
+        coord[this.xaxis] = x/this.canvas.width;
+        coord[this.yaxis] = 1-y/this.canvas.height;
+        return coord;
+    }
+    /**
+     * Handle mouse motion events
+     */
+    moveHandler(e: MouseEvent) {
+        if( e.buttons) {
+            let color = this.colorFromPos(e.offsetX, e.offsetY);
+            if( color !== null) {
+                this.model.selection = color;
+            }
+        }
+        //console.log("Moved to " + e.offsetX + ", " + e.offsetY+" button: "+e.button+" buttons: "+e.buttons);
+        
+    }
+    /**
+     * Handle click events
+     */
+    clickHandler(e: MouseEvent) {
+        let color = this.colorFromPos(e.offsetX, e.offsetY);
+        if( color !== null) {
+            this.model.selection = color;
+        }
+        //console.log("clicked at " + e.offsetX + ", " + e.offsetY);
+        //console.log("         = " + color);
+    }
 }
 
 class ColorStrip<C extends Color> implements Viewport<C> {
@@ -102,6 +154,8 @@ class ColorStrip<C extends Color> implements Viewport<C> {
         model.addEventListener("colorselected", this.update.bind(this));
         this.update();
 
+        canvas.addEventListener('mousemove', this.moveHandler.bind(this));
+        canvas.addEventListener('click', this.clickHandler.bind(this));
     }
 
     update(): void {
@@ -109,12 +163,10 @@ class ColorStrip<C extends Color> implements Viewport<C> {
         if(ctx != null) {
             let imgdata: ImageData = ctx.getImageData(0,0, this.canvas.width, this.canvas.height);
             let data: Uint8ClampedArray = imgdata.data;
-            let coord: C = this.model.selection.slice() as C; // clone
             for(let y=0; y< this.canvas.height; y++){
                 for(let x=0; x<this.canvas.width; x++){
-                    let frac = this.orientation == "vertical" ? 1-y/this.canvas.height : x/this.canvas.width;
-                    coord[this.axis] = frac;
-                    
+                    let coord = this.colorFromPos(x,y);
+
                     let color = this.model.getRGB(coord);
                     
                     let pos = (y*this.canvas.width + x) * 4;
@@ -134,5 +186,74 @@ class ColorStrip<C extends Color> implements Viewport<C> {
             }
             ctx.putImageData(imgdata, 0,0);
         }
+    }
+
+    /**
+     * Convert a visualizationSpace color to a pixel coordinate.
+     * This is the inverse of colorFromPos.
+     *
+     * With the default aesthetics, colors start with (0,0,*) in the bottom left
+     * and (1,1,*) in the top right (ignoring axes orthogonal to this slice).
+     * Pixels start with 0,0 in the top left and go to (width, height).
+     *
+     * Depending on the orientation, either the x or y coordinate will be 0.
+     *
+     * @param color
+     * @return x, y pixel coordinate
+     */
+    posFromColor(color: C): [number, number] | null {
+        let x = 0;
+        let y = 0;
+        if( this.orientation == "horizontal") {
+            x = Math.floor(color[this.axis] * this.canvas.width);
+        } else {
+            y = Math.floor((1 - color[this.axis]) * this.canvas.width);
+        }
+        return [x,y];
+    }
+    /**
+     * Converts a pixel coordinate to a visualizationSpace color
+     * This is the inverse of posFromColor
+     *
+     * Pixels start with 0,0 in the top left and go to (width, height)
+     * With the default aesthetics, colors start with (0,0,*) in the bottom left
+     * and (1,1,*) in the top right.
+     *
+     * @param x pixel column index in [0, width)
+     * @param y pixel row index in [0, height)
+     * @return a color, with axes orthogonal to this slice taken from the selected color
+     */
+    colorFromPos(x: number, y: number): C | null {
+        let coord: C = this.model.selection.slice() as C; // clone
+        if( this.orientation == "horizontal") {
+            coord[this.axis] = x / this.canvas.width;
+        } else {
+            coord[this.axis] = 1 - y/this.canvas.width;
+        }
+        return coord;
+    }
+    /**
+     * Handle mouse motion events
+     */
+    moveHandler(e: MouseEvent) {
+        if( e.buttons) {
+            let color = this.colorFromPos(e.offsetX, e.offsetY);
+            if( color !== null) {
+                this.model.selection = color;
+            }
+        }
+        //console.log("Moved to " + e.offsetX + ", " + e.offsetY+" button: "+e.button+" buttons: "+e.buttons);
+        
+    }
+    /**
+     * Handle click events
+     */
+    clickHandler(e: MouseEvent) {
+        let color = this.colorFromPos(e.offsetX, e.offsetY);
+        if( color !== null) {
+            this.model.selection = color;
+        }
+        //console.log("clicked at " + e.offsetX + ", " + e.offsetY);
+        //console.log("         = " + color);
     }
 }
