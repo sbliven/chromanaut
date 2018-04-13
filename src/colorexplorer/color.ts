@@ -10,3 +10,7 @@ function randomColor3(): Color3 {
 interface ColorMapping<S extends Color, T extends Color> {
     (src: S): T;
 }
+
+function inRange<C extends Color>(color: C) {
+    return color.findIndex( (c) => c < 0 || 1 < c) < 0;
+}

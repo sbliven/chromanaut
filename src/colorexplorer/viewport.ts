@@ -38,8 +38,7 @@ abstract class AxisAlignedViewport<C extends Color> implements Viewport<C> {
                 protected canvas: HTMLCanvasElement,
                 public aesthetics?: any) {        
         model.addEventListener("colorselected", this.update.bind(this));
-        this.update();
-        
+
         canvas.addEventListener('mousemove', this.moveHandler.bind(this));
         canvas.addEventListener('click', this.clickHandler.bind(this));
     }
@@ -56,7 +55,7 @@ abstract class AxisAlignedViewport<C extends Color> implements Viewport<C> {
                     let color = this.model.getRGB(coord);
                     
                     let pos = (y*this.canvas.width + x) * 4;
-                    if( color != null) {
+                    if( color != null && inRange(color)) {
                         data[pos  ] = color[0]*256;
                         data[pos+1] = color[1]*256;
                         data[pos+2] = color[2]*256;
@@ -73,7 +72,7 @@ abstract class AxisAlignedViewport<C extends Color> implements Viewport<C> {
             ctx.putImageData(imgdata, 0,0);
         }
     }
-    
+        
     /**
      * Convert a visualizationSpace color to a pixel coordinate.
      * This is the inverse of colorFromPos.
@@ -138,6 +137,7 @@ class ColorSlice<C extends Color> extends AxisAlignedViewport<C>{
         super(model, canvas, aesthetics);
         this.xaxis = xaxis != undefined ? xaxis : 0;
         this.yaxis = yaxis != undefined ? yaxis : 1;
+        this.update();
     }
     
     posFromColor(color: C): [number, number] | null {
@@ -165,6 +165,7 @@ class ColorStrip<C extends Color> extends AxisAlignedViewport<C> {
         super(model, canvas, aesthetics)
         this.axis = axis != undefined ? axis : 0;
         this.orientation = orientation || "horizontal";
+        this.update();
     }
 
     posFromColor(color: C): [number, number] | null {
@@ -173,7 +174,7 @@ class ColorStrip<C extends Color> extends AxisAlignedViewport<C> {
         if( this.orientation == "horizontal") {
             x = Math.floor(color[this.axis] * this.canvas.width);
         } else {
-            y = Math.floor((1 - color[this.axis]) * this.canvas.width);
+            y = Math.floor((1 - color[this.axis]) * this.canvas.height);
         }
         return [x,y];
     }
@@ -182,8 +183,68 @@ class ColorStrip<C extends Color> extends AxisAlignedViewport<C> {
         if( this.orientation == "horizontal") {
             coord[this.axis] = x / this.canvas.width;
         } else {
-            coord[this.axis] = 1 - y/this.canvas.width;
+            coord[this.axis] = 1 - y/this.canvas.height;
         }
         return coord;
     }
 }
+
+/**
+ * Viewport using cylindrical coordinates
+ */
+class ColorCircle<C extends Color> extends AxisAlignedViewport<C>{
+    radialAxis: number;
+    thetaAxis: number;
+
+    constructor(model: VisualizerSpace<C>,
+                  canvas: HTMLCanvasElement,
+                 thetaAxis?: number, radialAxis?: number,
+                public aesthetics?: any) {
+        super(model, canvas, aesthetics);
+        this.radialAxis = radialAxis != undefined ? radialAxis : 0;
+        this.thetaAxis = thetaAxis != undefined ? thetaAxis : 1;
+        this.update();
+    }
+    
+    posFromColor(color: C): [number, number] | null {
+        let w = this.canvas.width,
+            h = this.canvas.height,
+            s = Math.min(w,h)/2,
+            r = color[this.radialAxis],
+            t = color[this.thetaAxis]*2*Math.PI,
+            x = Math.floor( w/2 + r*s*Math.cos(t)),
+            y = Math.floor( h/2 - r*s*Math.sin(t));
+        return [x,y];
+    }
+    colorFromPos(x: number, y: number): C | null {
+        let w = this.canvas.width,
+            h = this.canvas.height,
+            s = Math.min(w,h)/2,
+            dx = x - w/2,
+            dy = h/2 - y,
+            r = Math.sqrt( dx*dx + dy*dy)/s,
+            t = Math.atan2(dy/s, dx/s) /2/Math.PI;
+        // normalize ranges
+        if( t < 0 ) t+=1;
+        
+        let coord: C = this.model.selection.slice() as C; // clone
+        coord[this.radialAxis] = r;
+        coord[this.thetaAxis] = t;
+        return coord;
+    }
+    
+    update(): void {
+        super.update();
+        let ctx: CanvasRenderingContext2D | null = this.canvas.getContext("2d");
+        if(ctx != null) {
+            let w = this.canvas.width,
+                h = this.canvas.height,
+                r = Math.min(w,h)/2;
+            ctx.beginPath()
+            ctx.lineWidth = 1.5;
+            ctx.arc(w/2,h/2,r,0,2*Math.PI);
+            ctx.stroke();
+        }
+    }
+}
+
