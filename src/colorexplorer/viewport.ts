@@ -1,3 +1,5 @@
+import {VisualizerSpace} from "./colorexplorer";
+import {Color, inRange} from "./color";
 
 //interface Projection2D<C extends Color> {
 //    project(xy: Color2 | null): C | null;
@@ -126,7 +128,7 @@ abstract class AxisAlignedViewport<C extends Color> implements Viewport<C> {
     }
 }
 
-class ColorSlice<C extends Color> extends AxisAlignedViewport<C>{
+export class ColorSlice<C extends Color> extends AxisAlignedViewport<C>{
     xaxis: number;
     yaxis: number;
 
@@ -153,7 +155,7 @@ class ColorSlice<C extends Color> extends AxisAlignedViewport<C>{
     }
 }
 
-class ColorStrip<C extends Color> extends AxisAlignedViewport<C> {
+export class ColorStrip<C extends Color> extends AxisAlignedViewport<C> {
     axis: number;
     orientation: "vertical" | "horizontal";
     
@@ -192,7 +194,7 @@ class ColorStrip<C extends Color> extends AxisAlignedViewport<C> {
 /**
  * Viewport using cylindrical coordinates
  */
-class ColorCircle<C extends Color> extends AxisAlignedViewport<C>{
+export class ColorCircle<C extends Color> extends AxisAlignedViewport<C>{
     radialAxis: number;
     thetaAxis: number;
 

@@ -1,3 +1,6 @@
+import {Color, Color3} from "./color";
+
+
 type EventTypes = "colorselected";
 
 /**
@@ -8,7 +11,7 @@ type EventTypes = "colorselected";
  *
  * @param C Specifies which vector space is used to represent colors (eg Color3)
  */
-class VisualizerSpace<C extends Color> implements EventTarget {
+export class VisualizerSpace<C extends Color> implements EventTarget {
     private _selection: C;
     
     // EventTarget function declarations

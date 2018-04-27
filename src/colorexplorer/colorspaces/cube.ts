@@ -1,6 +1,5 @@
-//import {Color3} from "../color";
-//import {distance2} from "../util";
-//import {ColorSpace} from "./colorspace";
+import {Color3} from "../color";
+import {ColorSpace, colorspaces} from "./colorspace";
 
 class CubeSpace implements ColorSpace<Color3> {
     name: string = "cube";

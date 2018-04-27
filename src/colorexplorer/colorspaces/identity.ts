@@ -1,8 +1,7 @@
-//import {Color3} from "../color";
-//import {distance2} from "../util";
-//import {ColorSpace} from "./colorspace";
+import {Color3} from "../color";
+import {ColorSpace, colorspaces} from "./colorspace";
 
-class IdentitySpace implements ColorSpace<Color3> {
+export class IdentitySpace implements ColorSpace<Color3> {
     name = "identity";
     toXYZ(color: Color3 | null): Color3 | null {
         return color;

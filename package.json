@@ -2,20 +2,29 @@
   "name": "colorexplorer",
   "version": "0.0.1",
   "description": "Color space explorer",
-  "main": "index.js",
+  "main": "dist/colorexplorer.js",
+  "browser": "colorexplorer",
   "scripts": {
-    "build": "tsc",
-    "watch": "tsc -watch",
-    "clean": "rm -rf build web/colorexplorer.js",
+    "build": "webpack && cp dist/colorexplorer.js web/colorexplorer.js",
+    "watch": "webpack --watch",
+    "clean": "rm -rf dist web/colorexplorer.js",
     "docs": "typedoc --mode file --ignoreCompilerErrors --out docs/ src/",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "Spencer Bliven",
   "license": "LGPL-3.0",
   "devDependencies": {
-    "amd": "0.0.0",
-    "typedoc": "^0.11.1",
-    "typescript": "^2.8.1"
+    "babel-core": "^6.26.0",
+    "babel-loader": "^7.1.4",
+    "babel-plugin-add-module-exports": "^0.2.1",
+    "babel-preset-env": "^1.6.1",
+    "eslint": "^3.9.1",
+    "eslint-loader": "^1.6.1",
+    "lodash": "^4.16.6",
+    "ts-loader": "^4.2.0",
+    "typescript": "^2.8.3",
+    "webpack": "^4.4.1",
+    "webpack-cli": "^2.0.12"
   },
   "dependencies": {}
 }

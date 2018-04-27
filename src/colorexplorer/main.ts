@@ -1,4 +1,8 @@
-function rgbPicker(canvas1: HTMLCanvasElement, canvas2: HTMLCanvasElement, vspace?: VisualizerSpace<Color3>) {
+import {VisualizerSpace} from "./colorexplorer";
+import {Color3} from "./color";
+import {ColorStrip, ColorCircle, ColorSlice} from './viewport'
+
+export function rgbPicker(canvas1: HTMLCanvasElement, canvas2: HTMLCanvasElement, vspace?: VisualizerSpace<Color3>) {
     //let space = colorspaces[IdentitySpace.name];
     if(vspace === undefined) {
         vspace = new VisualizerSpace<Color3>([0,0,0]);
@@ -14,7 +18,7 @@ function rgbPicker(canvas1: HTMLCanvasElement, canvas2: HTMLCanvasElement, vspac
     };
 }
 
-function hslPicker(canvas1: HTMLCanvasElement, canvas2: HTMLCanvasElement, vspace?: VisualizerSpace<Color3>) {
+export function hslPicker(canvas1: HTMLCanvasElement, canvas2: HTMLCanvasElement, vspace?: VisualizerSpace<Color3>) {
     //let space = colorspaces[IdentitySpace.name];
     if(vspace === undefined) {
         vspace = new VisualizerSpace<Color3>([0,0,0]);
