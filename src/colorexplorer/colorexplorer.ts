@@ -1,17 +1,22 @@
-import {Color, Color3} from "./color";
+import {Color} from "./color";
+import * as cs from "color-space";
+import * as ch from "chroma-js";
 
+//export let cs = colorspace;
+export let chroma:any = ch;
+export let colorspace:any = cs;
 
 type EventTypes = "colorselected";
 
 /**
- * Models the main colorspace being visualized.
+ * Tracks a selected color, allowing coordination between several viewports.
  *
  * Tracks the selected color and notifies viewports and other listeners upon changes.
  * Viewports should update to contain the selected color.
  *
  * @param C Specifies which vector space is used to represent colors (eg Color3)
  */
-export class VisualizerSpace<C extends Color> implements EventTarget {
+export class SelectionManager<C extends Color> implements EventTarget {
     private _selection: C;
     
     // EventTarget function declarations
@@ -34,7 +39,6 @@ export class VisualizerSpace<C extends Color> implements EventTarget {
         this.addEventListener = target.addEventListener.bind(target);
         this.removeEventListener = target.removeEventListener.bind(target);
         this.dispatchEvent = target.dispatchEvent.bind(target);
-
     }
     
     get selection(): C {
@@ -50,16 +54,8 @@ export class VisualizerSpace<C extends Color> implements EventTarget {
             this.dispatchEvent(evt);
         }
     }
-    
-    getRGB(color: C | null): Color3 | null {
-        if( color === null) {
-            return null;
-        }
-        return color.slice(0, 3) as Color3;
-        
-    }
 }
-//let v = new VisualizerSpace([0,.5,1]);
+//let v = new SelectionManager([0,.5,1]);
 //v.addEventListener("colorselected",
 //(ev: Event) => {
 //    let e = ev as CustomEvent;
