@@ -1,10 +1,5 @@
 import {Color} from "./color";
 import * as cs from "color-space";
-import * as ch from "chroma-js";
-
-//export let cs = colorspace;
-export let chroma:any = ch;
-export let colorspace:any = cs;
 
 type EventTypes = "colorselected";
 

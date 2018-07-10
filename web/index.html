@@ -17,28 +17,13 @@
             </div>
             <div class="row">
                 <div class="col-lg-6">
-                    <div class="row">
-                        <div class="col">
-                            <canvas id="colorpicker2d" width="400" height="200">
-                            </canvas>
-                        </div>
-                    </div>
-                    <div class="row">
-                        <div class="col">
-                            <canvas id="colorpicker1d" width="400" height="10">
-                            </canvas>
-                        </div>
-                    </div>
+                    <canvas id="colorpicker2d" width="400" height="200"></canvas>
                 </div>
                 <div class="col-lg-6">
-                    <canvas id="colorpickerRad" width="400" height="200">
-                            </canvas>
-                    <canvas id="colorpicker1dvert" width="10" height="200">
-                            </canvas>
-
+                    <canvas id="colorpickerRad" width="400" height="200"></canvas>
                 </div>
             </div>
-            <div class="row">
+            <div class="row"> 
                 <form>
                     <div class="col">
                         <label for="axis1">R</label>
@@ -62,14 +47,11 @@
         <script>
 
 var picker, space, picker2, swatch;
-$(document).ready( function() {
-    let canvas2 = document.getElementById("colorpicker2d");
-    let canvas1 = document.getElementById("colorpicker1d");
-    
-    picker = colorexplorer.rgbPicker(canvas1, canvas2);
+$(document).ready( function() {    
+    picker = colorexplorer.rgbPicker($("#colorpicker2d")[0]);
     space = picker.space;
     space.selection = [1,1,0];
-    picker2 = colorexplorer.hslPicker($("#colorpicker1dvert")[0], $("#colorpickerRad")[0], space);
+    picker2 = colorexplorer.hslPicker($("#colorpickerRad")[0], space);
     
     // sync text boxes to colorspace
     space.addEventListener('colorselected', function(e) {
