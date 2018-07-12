@@ -1,5 +1,6 @@
 import {SelectionManager} from "./colorexplorer";
-import {Color, Color3, inRange, ColorMapping, sRGBtransform, rgb2css} from "./color";
+import {Color, rgb2css, inGamut, normalize, unnormalize} from "./color";
+import {colorspace, rgb} from "color-space";
 
 //interface Projection2D<C extends Color> {
 //    project(xy: Color2 | null): C | null;
@@ -28,7 +29,6 @@ import {Color, Color3, inRange, ColorMapping, sRGBtransform, rgb2css} from "./co
 
 /**
  * A view of the current selection space
- * @param C Colorspace of this viewport
  */
 interface Viewport {
     /**
@@ -39,16 +39,29 @@ interface Viewport {
     update(): void;
 }
 
-export class Swatch<S extends Color> implements Viewport {
-    constructor(protected model: SelectionManager<S>,
-                protected toRGB: sRGBtransform<S>,
+/**
+ * Properties affecting the display of some viewports
+ */
+export interface ViewportAesthetics {
+    /// x, y, width, height with respect to the canvas. Defaults to the full canvas
+    boundingBox?: [number,number,number,number];
+    /// selection cursor type. Default "circle"
+    cursor?: "none"|"circle"|"crosshair";
+}
+
+/**
+ * Paint a canvas uniformly with the selected color
+ */
+export class Swatch implements Viewport {
+    constructor(protected model: SelectionManager,
                 protected canvas: HTMLElement) {
         model.addEventListener("colorselected", this.update.bind(this));
     }
     update(): void {
         console.log("updating selection");
-        let selected: S | null = this.model.selection;
-        let color: Color3 | null = this.toRGB(selected);
+        let selected: Color | null = this.model.selection;
+        // convert from model colorspace to RGB
+        let color: Color | null = this.model.space.rgb(selected);
         if( color === null ) {
             this.canvas.style.background = "#ffffff00";
         } else {
@@ -57,24 +70,15 @@ export class Swatch<S extends Color> implements Viewport {
     }
 }
 
-export interface ViewportAesthetics {
-    /// x, y, width, height with respect to the canvas. Defaults to the full canvas
-    boundingBox?: [number,number,number,number];
-    /// selection cursor type. Default "circle"
-    cursor?: "none"|"circle"|"crosshair";
-}
+
 /**
  * A slice of color space across one of the axes
- *
- * @param C ColorSpace of the underlying SelectionManager
  */
-abstract class AxisAlignedViewport<C extends Color, S extends Color> implements Viewport {
+abstract class AxisAlignedViewport implements Viewport {
     protected aesthetics: ViewportAesthetics;
     
-    constructor(protected model: SelectionManager<S>,
-                protected fromSelection: ColorMapping<S,C>,
-                protected toSelection: ColorMapping<C,S>,
-                protected toRGB: sRGBtransform<C>,
+    constructor(protected model: SelectionManager,
+                protected space: colorspace,
                 protected canvas: HTMLCanvasElement,
                 aesthetics?: ViewportAesthetics) {
         model.addEventListener("colorselected", this.update.bind(this));
@@ -97,15 +101,16 @@ abstract class AxisAlignedViewport<C extends Color, S extends Color> implements 
             for(let y=0; y< h; y++){
                 for(let x=0; x<w; x++){
                     // Get color from subclass
-                    let coord: C | null = this.colorFromPos(x/w,y/h);
+                    let coord: Color | null = this.colorFromPos(x/w,y/h);
                     
-                    let color: Color3 | null = this.toRGB(coord);
+                    // convert to RGB
+                    let color: Color | null = this.space.rgb(coord);
                     
                     let pos = (y*w + x) * 4;
-                    if( color != null && inRange(color)) {
-                        data[pos  ] = color[0]*255;
-                        data[pos+1] = color[1]*255;
-                        data[pos+2] = color[2]*255;
+                    if( color != null && inGamut(rgb, color)) {
+                        data[pos  ] = color[0];
+                        data[pos+1] = color[1];
+                        data[pos+2] = color[2];
                         data[pos+3] = 255;
                     } else {
                         // null color -> translucent
@@ -158,7 +163,7 @@ abstract class AxisAlignedViewport<C extends Color, S extends Color> implements 
     }
         
     /**
-     * Convert a visualizationSpace color to a pixel coordinate.
+     * Convert a color in this viewport's colorspace to a pixel coordinate.
      * This is the inverse of colorFromPos.
      *
      * With the default aesthetics, colors start with (0,0,*) in the bottom left
@@ -168,10 +173,10 @@ abstract class AxisAlignedViewport<C extends Color, S extends Color> implements 
      * @param color
      * @return x, y fractional pixel coordinate (origin in the top-left, 0-1)
      */
-    abstract posFromColor(color: C): [number, number] | null;
+    abstract posFromColor(color: Color): [number, number] | null;
 
     /**
-     * Converts a pixel coordinate to a visualizationSpace color
+     * Converts a pixel coordinate to a color in this viewport's colorspace
      * This is the inverse of posFromColor
      *
      * Pixels start with 0,0 in the top left and go to (width, height)
@@ -182,7 +187,7 @@ abstract class AxisAlignedViewport<C extends Color, S extends Color> implements 
      * @param y pixel row index in [0, 1)
      * @return a color, with axes orthogonal to this slice taken from the selected color
      */
-    abstract colorFromPos(x: number, y: number): C | null;
+    abstract colorFromPos(x: number, y: number): Color | null;
 
     /**
      * Handle mouse motion events
@@ -193,8 +198,9 @@ abstract class AxisAlignedViewport<C extends Color, S extends Color> implements 
                 x = (e.offsetX - bb[0])/bb[2],
                 y = (e.offsetY - bb[1])/bb[3];
                 
-            let color = this.colorFromPos(x,y);
-            let selection = this.toSelection(color);
+            let color: Color|null = this.colorFromPos(x,y);
+            // convert from viewport colorspace to model colorspace
+            let selection: Color|null = this.space[this.model.space.name](color);
             if( selection !== null) {
                 this.model.selection = selection;
             }
@@ -211,7 +217,8 @@ abstract class AxisAlignedViewport<C extends Color, S extends Color> implements 
             y = (e.offsetY - bb[1])/bb[3];
 
         let color = this.colorFromPos(x,y);
-        let selection = this.toSelection(color);
+        // convert from viewport colorspace to model colorspace
+        let selection = this.space[this.model.space.name](color);
         if( selection !== null) {
             this.model.selection = selection;
         }
@@ -223,116 +230,115 @@ abstract class AxisAlignedViewport<C extends Color, S extends Color> implements 
 /**
  * A 2D viewport showing a slice through color space
  */
-export class ColorSlice<C extends Color, S extends Color> extends AxisAlignedViewport<C,S>{
+export class ColorSlice extends AxisAlignedViewport{
     xaxis: number;
     yaxis: number;
 
-    constructor(model: SelectionManager<S>,
-                fromSelection: ColorMapping<S,C>,
-                toSelection: ColorMapping<C,S>,
-                toRGB: sRGBtransform<C>,
+    constructor(model: SelectionManager,
+                space: colorspace,
                 canvas: HTMLCanvasElement,
                 xaxis?: number, yaxis?: number,
                 aesthetics?: ViewportAesthetics) {
-        super(model, fromSelection, toSelection, toRGB, canvas, aesthetics);
+        super(model, space, canvas, aesthetics);
         this.xaxis = xaxis != undefined ? xaxis : 0;
         this.yaxis = yaxis != undefined ? yaxis : 1;
         this.update();
     }
     
-    posFromColor(color: C): [number, number] | null {
-        let x = color[this.xaxis],
-            y = 1 - color[this.yaxis];
+    posFromColor(color: Color): [number, number] | null {
+        let norm = normalize(this.space, color),
+            x = norm[this.xaxis],
+            y = 1 - norm[this.yaxis];
         return [x,y];
     }
-    colorFromPos(x: number, y: number): C | null {
-        let coord: C | null = this.fromSelection(this.model.selection);
+    colorFromPos(x: number, y: number): Color | null {
+        // Convert selection to viewport colorspace
+        let coord: Color | null = this.model.space[this.space.name](this.model.selection);
         if( coord === null) {
             return null;
         }
-        coord = coord.slice() as C; // clone
-        coord[this.xaxis] = x;
-        coord[this.yaxis] = 1-y;
-        return coord;
+        let norm = normalize(this.space, coord); // clone
+        
+        norm[this.xaxis] = x;
+        norm[this.yaxis] = 1-y;
+        return unnormalize(this.space, norm);
     }
 }
 
 /**
  * A viewport showing a single color axis as a slider
  */
-export class ColorStrip<C extends Color, S extends Color> extends AxisAlignedViewport<C,S> {
+export class ColorStrip extends AxisAlignedViewport {
     axis: number;
     orientation: "vertical" | "horizontal";
     
-    constructor(model: SelectionManager<S>,
-                 fromSelection: ColorMapping<S,C>,
-                 toSelection: ColorMapping<C,S>,
-                 toRGB: sRGBtransform<C>,
+    constructor(model: SelectionManager,
+                 space: colorspace,
                  canvas: HTMLCanvasElement,
                  axis?: number,
                  orientation?: "vertical" | "horizontal",
                  aesthetics?: ViewportAesthetics) {
-        super(model, fromSelection, toSelection, toRGB, canvas, aesthetics)
+        super(model, space, canvas, aesthetics)
         this.axis = axis != undefined ? axis : 0;
         this.orientation = orientation || "horizontal";
         this.update();
     }
 
-    posFromColor(color: C): [number, number] | null {
+    posFromColor(color: Color): [number, number] | null {
         let x = 0;
         let y = 0;
+        let norm = normalize(this.space, color);
         if( this.orientation == "horizontal") {
-            x = color[this.axis];
+            x = norm[this.axis];
         } else {
-            y = 1 - color[this.axis];
+            y = 1 - norm[this.axis];
         }
         return [x,y];
     }
-    colorFromPos(x: number, y: number): C | null {
-        let coord: C | null = this.fromSelection(this.model.selection);
+    colorFromPos(x: number, y: number): Color | null {
+        let coord: Color | null = this.model.space[this.space.name](this.model.selection);
         if( coord === null) {
             return null;
         }
-        coord = coord.slice() as C; // clone
+        let norm = normalize(this.space, coord); // clone
         if( this.orientation == "horizontal") {
-            coord[this.axis] = x;
+            norm[this.axis] = x;
         } else {
-            coord[this.axis] = 1 - y;
+            norm[this.axis] = 1 - y;
         }
-        return coord;
+        return unnormalize(this.space, norm);
     }
 }
 
 /**
  * Viewport using cylindrical coordinates
  */
-export class ColorCircle<C extends Color, S extends Color> extends AxisAlignedViewport<C,S>{
+export class ColorCircle extends AxisAlignedViewport{
     radialAxis: number;
     thetaAxis: number;
     clipToCircle: boolean;
 
-    constructor(model: SelectionManager<S>,
-                fromSelection: ColorMapping<S,C>,
-                toSelection: ColorMapping<C,S>,
-                toRGB: sRGBtransform<C>,
+    constructor(model: SelectionManager,
+                space: colorspace,
                 canvas: HTMLCanvasElement,
                 thetaAxis?: number, radialAxis?: number,
                 aesthetics?: ViewportAesthetics,
                 clipToCircle?: boolean) {
-        super(model, fromSelection, toSelection, toRGB, canvas, aesthetics);
+        super(model, space, canvas, aesthetics);
         this.radialAxis = radialAxis != undefined ? radialAxis : 0;
         this.thetaAxis = thetaAxis != undefined ? thetaAxis : 1;
         this.clipToCircle = clipToCircle != undefined ? clipToCircle : true;
         this.update();
     }
     
-    posFromColor(color: C): [number, number] | null {
+    posFromColor(color: Color): [number, number] | null {
         let [x0,y0,w,h] = this.getBounds(),
             // rescale to preserve aspect ratio
             sx = Math.min(w,h)/w,
             sy = Math.min(w,h)/h,
-            r = color[this.radialAxis],
-            t = color[this.thetaAxis]*2*Math.PI;
+            norm = normalize(this.space, color),
+            r = norm[this.radialAxis],
+            t = norm[this.thetaAxis]*2*Math.PI;
         if(this.clipToCircle && r>1) {
             r = 1;
         }
@@ -340,7 +346,7 @@ export class ColorCircle<C extends Color, S extends Color> extends AxisAlignedVi
             y = (1/2 - r*sy*Math.sin(t))*sy;
         return [x,y];
     }
-    colorFromPos(x: number, y: number): C | null {
+    colorFromPos(x: number, y: number): Color | null {
         let [x0,y0,w,h] = this.getBounds(),
             // rescale to preserve aspect ratio
             sx = Math.min(w,h)/w/2,
@@ -349,18 +355,18 @@ export class ColorCircle<C extends Color, S extends Color> extends AxisAlignedVi
             dx = (x - 1/2)/sx,
             dy = (1/2 - y)/sy,
             r = Math.sqrt( dx*dx + dy*dy),
-            t = Math.atan2(dy, dx) /2/Math.PI;
+            t = Math.atan2(dy, dx) /2/Math.PI; //angle theta
         // normalize ranges
         if( t < 0 ) t+=1;
         
-        let coord: C | null = this.fromSelection(this.model.selection);
+        let coord: Color | null = this.model.space[this.space.name](this.model.selection);
         if( coord === null) {
             return null;
         }
-        coord = coord.slice() as C; // clone
-        coord[this.radialAxis] = r;
-        coord[this.thetaAxis] = t;
-        return coord;
+        let norm = normalize(this.space, coord); // clone
+        norm[this.radialAxis] = r;
+        norm[this.thetaAxis] = t;
+        return unnormalize(this.space, norm);
     }
     
     overlay(ctx: CanvasRenderingContext2D, bb: [number,number,number,number]): void {

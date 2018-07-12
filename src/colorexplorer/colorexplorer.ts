@@ -1,5 +1,8 @@
 import {Color} from "./color";
-import * as cs from "color-space";
+import {colorspace} from "color-space";
+
+import * as cs1 from "color-space";
+export let cs = cs1;
 
 type EventTypes = "colorselected";
 
@@ -8,11 +11,10 @@ type EventTypes = "colorselected";
  *
  * Tracks the selected color and notifies viewports and other listeners upon changes.
  * Viewports should update to contain the selected color.
- *
- * @param C Specifies which vector space is used to represent colors (eg Color3)
  */
-export class SelectionManager<C extends Color> implements EventTarget {
-    private _selection: C;
+export class SelectionManager implements EventTarget {
+    private _selection: Color;
+    public readonly space: colorspace;
     
     // EventTarget function declarations
     addEventListener: (type: EventTypes, listener: EventListenerOrEventListenerObject | null,
@@ -24,9 +26,16 @@ export class SelectionManager<C extends Color> implements EventTarget {
     /**
      * @param selection Initial selected color
      */
-    constructor(selection: C) {
+    constructor(selection: Color, space: colorspace) {
         this._selection = selection;
+        this.space = space;
         
+        // Check that the selection and space are compatible
+        if(selection.length != space.min.length) {
+            throw "Incompatible selection tuple (" + selection.length
+                + ") for this space (" + space.min.length + ")";
+        }
+
         // Create a DOM EventTarget object
         var target: Text = document.createTextNode("");
 
@@ -36,10 +45,10 @@ export class SelectionManager<C extends Color> implements EventTarget {
         this.dispatchEvent = target.dispatchEvent.bind(target);
     }
     
-    get selection(): C {
+    get selection(): Color {
         return this._selection;
     }
-    set selection(color: C) {
+    set selection(color: Color) {
         if(color != this._selection) {
             let oldsel = this._selection;
             this._selection = color;

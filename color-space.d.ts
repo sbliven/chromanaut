@@ -3,89 +3,57 @@
 // Definitions by: Spencer Bliven
 
 // color convertor function type
-export type colorConvertor = (source: number[]) => number[];
+export type colorConvertor = (source: number[] | null) => number[] | null;
 
 // 
-export interface colorspace {
+export type colorspace = {
     name: string; //space name
     min: number[]; //channel minimums
     max: number[]; //channel maximums
     channel: string[]; //channel names
     alias: string[]; //alias space names
+    // Require conversions to RGB and XYZ
     rgb: colorConvertor;
-	hsl: colorConvertor;
-	hsv: colorConvertor;
-	hsi: colorConvertor;
-	hwb: colorConvertor;
-	cmyk: colorConvertor;
-	cmy: colorConvertor;
 	xyz: colorConvertor;
-	xyy: colorConvertor;
-	yiq: colorConvertor;
-	yuv: colorConvertor;
-	ydbdr: colorConvertor;
-	ycgco: colorConvertor;
-	ypbpr: colorConvertor;
-	ycbcr: colorConvertor;
-	xvycc: colorConvertor;
-	yccbccrc: colorConvertor;
-	ucs: colorConvertor;
-	uvw: colorConvertor;
-	jpeg: colorConvertor;
-	lab: colorConvertor;
-	labh: colorConvertor;
-	lms: colorConvertor;
-	lchab: colorConvertor;
-	luv: colorConvertor;
-	lchuv: colorConvertor;
-	hsluv: colorConvertor;
-	hpluv: colorConvertor;
-	cubehelix: colorConvertor;
-	coloroid: colorConvertor;
-	hcg: colorConvertor;
-	hcy: colorConvertor;
-	tsl: colorConvertor;
-	yes: colorConvertor;
-	osaucs: colorConvertor;
-	hsp: colorConvertor;
+} & {
+    // Other conversions can be accessed by name
+    [name:string] : colorConvertor;
 }
 
-// main spaces object
-export const spaces: {
-    rgb: colorspace,
-	hsl: colorspace,
-	hsv: colorspace,
-	hsi: colorspace,
-	hwb: colorspace,
-	cmyk: colorspace,
-	cmy: colorspace,
-	xyz: colorspace,
-	xyy: colorspace,
-	yiq: colorspace,
-	yuv: colorspace,
-	ydbdr: colorspace,
-	ycgco: colorspace,
-	ypbpr: colorspace,
-	ycbcr: colorspace,
-	xvycc: colorspace,
-	yccbccrc: colorspace,
-	ucs: colorspace,
-	uvw: colorspace,
-	jpeg: colorspace,
-	lab: colorspace,
-	labh: colorspace,
-	lms: colorspace,
-	lchab: colorspace,
-	luv: colorspace,
-	lchuv: colorspace,
-	hsluv: colorspace,
-	hpluv: colorspace,
-	cubehelix: colorspace,
-	coloroid: colorspace,
-	hcg: colorspace,
-	hcy: colorspace,
-	tsl: colorspace,
-	yes: colorspace,
-	osaucs: colorspace,
-	hsp: colorspace
-};
+// main module properties
+export const rgb: colorspace;
+export const hsl: colorspace;
+export const hsv: colorspace;
+export const hsi: colorspace;
+export const hwb: colorspace;
+export const cmyk: colorspace;
+export const cmy: colorspace;
+export const xyz: colorspace;
+export const xyy: colorspace;
+export const yiq: colorspace;
+export const yuv: colorspace;
+export const ydbdr: colorspace;
+export const ycgco: colorspace;
+export const ypbpr: colorspace;
+export const ycbcr: colorspace;
+export const xvycc: colorspace;
+export const yccbccrc: colorspace;
+export const ucs: colorspace;
+export const uvw: colorspace;
+export const jpeg: colorspace;
+export const lab: colorspace;
+export const labh: colorspace;
+export const lms: colorspace;
+export const lchab: colorspace;
+export const luv: colorspace;
+export const lchuv: colorspace;
+export const hsluv: colorspace;
+export const hpluv: colorspace;
+export const cubehelix: colorspace;
+export const coloroid: colorspace;
+export const hcg: colorspace;
+export const hcy: colorspace;
+export const tsl: colorspace;
+export const yes: colorspace;
+export const osaucs: colorspace;
+export const hsp: colorspace;
