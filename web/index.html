@@ -1,19 +1,17 @@
 <!doctype HTML>
 <html>
     <head>
-        <title>Color Explorer</title>
+        <title>Chromanaut demo</title>
         
         <link rel="stylesheet" href="assets/css/bootstrap.min.css" />
-
+        <link rel="stylesheet" href="assets/css/main.css" />
         
-        <link rel="stylesheet" href="assets/css/colorexplorer.css" />
-        
-        <script src="colorexplorer.js"></script>
+        <script src="chromanaut.js"></script>
     </head>
     <body>
         <div class="container">
             <div class="jumbotron">
-                <h1>Color Explorer</h1>
+                <h1>Chromanaut demo</h1>
             </div>
             <div class="row">
                 <div class="col-lg-6">
@@ -48,10 +46,10 @@
 
 var picker, space, picker2, swatch;
 $(document).ready( function() {    
-    picker = colorexplorer.rgbPicker($("#colorpicker2d")[0]);
+    picker = chromanaut.rgbPicker($("#colorpicker2d")[0]);
     space = picker.space;
     space.selection = [255,255,0];
-    picker2 = colorexplorer.hslPicker($("#colorpickerRad")[0], space);
+    picker2 = chromanaut.hslPicker($("#colorpickerRad")[0], space);
     
     // sync text boxes to colorspace
     space.addEventListener('colorselected', function(e) {
@@ -86,7 +84,7 @@ $(document).ready( function() {
     $("#axis3").on('change', updateColorFromForm);
     
     // Create swatch
-    swatch = new colorexplorer.Swatch(space, $("#myswatch")[0]);
+    swatch = new chromanaut.Swatch(space, $("#myswatch")[0]);
     swatch.update();
 });
         </script>

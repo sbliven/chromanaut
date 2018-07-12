@@ -1,13 +1,13 @@
 {
-  "name": "colorexplorer",
+  "name": "chromanaut",
   "version": "0.0.1",
-  "description": "Color space explorer",
-  "main": "dist/colorexplorer.js",
-  "browser": "colorexplorer",
+  "description": "Exploring color spaces in your browser",
+  "main": "dist/chromanaut.js",
+  "browser": "chromanaut",
   "scripts": {
-    "build": "webpack && cp dist/colorexplorer.js web/colorexplorer.js",
+    "build": "webpack && cp dist/chromanaut.js web/chromanaut.js",
     "watch": "webpack --watch",
-    "clean": "rm -rf dist web/colorexplorer.js",
+    "clean": "rm -rf dist web/chromanaut.js",
     "docs": "typedoc --mode file --ignoreCompilerErrors --out docs/ src/",
     "test": "echo \"Error: no test specified\" && exit 1"
   },

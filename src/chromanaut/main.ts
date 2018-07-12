@@ -1,4 +1,4 @@
-import {SelectionManager} from "./colorexplorer";
+import {SelectionManager} from "./selection";
 import {ColorStrip, ColorCircle, ColorSlice, ViewportAesthetics} from './viewport';
 import * as spaces from "color-space";
 

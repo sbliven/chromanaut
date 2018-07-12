@@ -6,11 +6,11 @@ export default () => (
         entry: './src/entry.ts',
         output: {
             path: path.resolve(__dirname, './dist'),
-            filename: 'colorexplorer.js',
+            filename: 'chromanaut.js',
             libraryTarget: 'umd',
             globalObject: 'this',
             // libraryExport: 'default',
-            library: 'colorexplorer'
+            library: 'chromanaut'
         },
         resolve: {
             extensions: [ '.tsx', '.ts', '.js' ]

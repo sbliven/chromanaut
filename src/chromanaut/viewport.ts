@@ -1,4 +1,4 @@
-import {SelectionManager} from "./colorexplorer";
+import {SelectionManager} from "./selection";
 import {Color, rgb2css, inGamut, normalize, unnormalize} from "./color";
 import {colorspace, rgb} from "color-space";
 
