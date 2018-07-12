@@ -50,7 +50,7 @@ var picker, space, picker2, swatch;
 $(document).ready( function() {    
     picker = colorexplorer.rgbPicker($("#colorpicker2d")[0]);
     space = picker.space;
-    space.selection = [1,1,0];
+    space.selection = [255,255,0];
     picker2 = colorexplorer.hslPicker($("#colorpickerRad")[0], space);
     
     // sync text boxes to colorspace

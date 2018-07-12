@@ -126,7 +126,7 @@ abstract class AxisAlignedViewport implements Viewport {
         }
     }
     
-    overlay(ctx: CanvasRenderingContext2D, boundingBox: [number,number,number,number]): void {}
+    protected overlay(_ctx: CanvasRenderingContext2D, _boundingBox: [number,number,number,number]): void {}
     
     /**
      * Set the aesthetics for this viewport
@@ -332,7 +332,9 @@ export class ColorCircle extends AxisAlignedViewport{
     }
     
     posFromColor(color: Color): [number, number] | null {
-        let [x0,y0,w,h] = this.getBounds(),
+        let bb = this.getBounds(),
+            w = bb[2],
+            h = bb[3],
             // rescale to preserve aspect ratio
             sx = Math.min(w,h)/w,
             sy = Math.min(w,h)/h,
@@ -347,7 +349,9 @@ export class ColorCircle extends AxisAlignedViewport{
         return [x,y];
     }
     colorFromPos(x: number, y: number): Color | null {
-        let [x0,y0,w,h] = this.getBounds(),
+        let bb = this.getBounds(),
+            w = bb[2],
+            h = bb[3],
             // rescale to preserve aspect ratio
             sx = Math.min(w,h)/w/2,
             sy = Math.min(w,h)/h/2,

@@ -1,8 +1,5 @@
 import {SelectionManager} from "./colorexplorer";
-import {Color3} from "./color";
 import {ColorStrip, ColorCircle, ColorSlice, ViewportAesthetics} from './viewport';
-import {identitySource} from "./colorspaces/identity";
-import {hsl2rgb, rgb2hsl} from "./colorspaces/hue";
 import * as spaces from "color-space";
 
 export function rgbPicker(canvas: HTMLCanvasElement, selection?: SelectionManager) {
