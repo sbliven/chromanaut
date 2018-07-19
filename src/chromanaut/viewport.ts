@@ -197,7 +197,12 @@ abstract class AxisAlignedViewport implements Viewport {
             let bb = this.getBounds(),
                 x = (e.offsetX - bb[0])/bb[2],
                 y = (e.offsetY - bb[1])/bb[3];
-                
+            
+            // Check within box
+            if( 0 > x || x > 1 || 0 > y || y > 1) {
+                return;
+            }
+
             let color: Color|null = this.colorFromPos(x,y);
             // convert from viewport colorspace to model colorspace
             let selection: Color|null = this.space[this.model.space.name](color);
@@ -216,14 +221,21 @@ abstract class AxisAlignedViewport implements Viewport {
             x = (e.offsetX - bb[0])/bb[2],
             y = (e.offsetY - bb[1])/bb[3];
 
+        // Check within box
+        if( 0 > x || x > 1 || 0 > y || y > 1) {
+            return;
+        }
+        
         let color = this.colorFromPos(x,y);
         // convert from viewport colorspace to model colorspace
         let selection = this.space[this.model.space.name](color);
         if( selection !== null) {
             this.model.selection = selection;
         }
-        //console.log("clicked at " + e.offsetX + ", " + e.offsetY);
-        //console.log("         = " + color);
+//        console.log("clicked at " + x + ", " + y);
+//        console.log("         = " + color);
+//        console.log("       bb= " + bb);
+//        console.log(`        e= ${e.offsetX}, ${e.offsetY}`);
     }
 }
 
