@@ -1,7 +1,7 @@
 /**
  * Euclidean distance squared between two arrays
  */
-function distance2(a: number[], b: number[]): number {
+export function distance2(a: number[], b: number[]): number {
     if(a.length != b.length) {
         throw "Input lengths don't match";
     }
@@ -15,6 +15,6 @@ function distance2(a: number[], b: number[]): number {
 /**
  * Euclidean distance between two arrays
  */
-function distance(a: number[], b: number[]): number {
+export function distance(a: number[], b: number[]): number {
     return Math.sqrt(distance2(a,b));
 }

@@ -344,8 +344,16 @@ export class ColorCircle extends AxisAlignedViewport{
         if(this.clipToCircle && r>1) {
             r = 1;
         }
-        let x = (1/2 + r*sx*Math.cos(t))*sx,
-            y = (1/2 - r*sy*Math.sin(t))*sy;
+        let x = 1/2 + r*sx*Math.cos(t)/2,
+            y = 1/2 - r*sy*Math.sin(t)/2;
+//console.log(`w=${w}
+//h=${h}
+//s=${sx}, ${sy}
+//norm=${norm}
+//rt=${r}, ${t}
+//xy=${x}, ${y}
+//`);
+
         return [x,y];
     }
     colorFromPos(x: number, y: number): Color | null {
@@ -360,6 +368,13 @@ export class ColorCircle extends AxisAlignedViewport{
             dy = (1/2 - y)/sy,
             r = Math.sqrt( dx*dx + dy*dy),
             t = Math.atan2(dy, dx) /2/Math.PI; //angle theta
+        
+//console.log(`w=${w}
+//h=${h}
+//s=${sx}, ${sy}
+//d=${dx}, ${dy}
+//rt=${r}, ${t}
+//`);
         // normalize ranges
         if( t < 0 ) t+=1;
         
