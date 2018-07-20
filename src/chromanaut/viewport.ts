@@ -1,5 +1,6 @@
 import {SelectionManager} from "./selection";
 import {Color, rgb2css, inGamut, normalize, unnormalize} from "./color";
+import {clip} from './util';
 import {colorspace, rgb} from "color-space";
 
 //interface Projection2D<C extends Color> {
@@ -62,7 +63,6 @@ export class Swatch implements Viewport {
         model.addEventListener("colorselected", this.update.bind(this));
     }
     update(): void {
-        console.log("updating selection");
         let selected: Color | null = this.model.selection;
         // convert from model colorspace to RGB
         let color: Color | null = this.model.space.rgb(selected);
@@ -89,6 +89,7 @@ abstract class AxisAlignedViewport implements Viewport {
         model.addEventListener("colorselected", this.update.bind(this));
         canvas.addEventListener('mousemove', this.moveHandler.bind(this));
         canvas.addEventListener('click', this.clickHandler.bind(this));
+//        canvas.addEventListener('mouseout', this.mouseoutHandler.bind(this));
         this.aesthetics = aesthetics || {};
         this.buttonState = 0;
     }
@@ -245,6 +246,24 @@ abstract class AxisAlignedViewport implements Viewport {
 //        console.log("       bb= " + bb);
 //        console.log(`        e= ${e.offsetX}, ${e.offsetY}`);
     }
+
+//    mouseoutHandler(e: MouseEvent) {
+//        this.buttonState = 0;
+//        let bb = this.getBounds(),
+//            x = (e.offsetX - bb[0])/bb[2],
+//            y = (e.offsetY - bb[1])/bb[3];
+//
+//        // Clip to box
+//        x = clip(x, 0, 1);
+//        y = clip(y, 0, 1);
+//
+//        let color: Color|null = this.colorFromPos(x,y);
+//        // convert from viewport colorspace to model colorspace
+//        let selection: Color|null = this.space[this.model.space.name](color);
+//        if( selection !== null) {
+//            this.model.selection = selection;
+//        }
+//    }
 }
 
 /**
@@ -322,7 +341,6 @@ export class ColorSlice extends AxisAlignedViewport{
                     // cursor
                     let rgb = this.space.rgb(selection);
                     if(rgb !== null) {
-                        console.log(`selectionPos=${selectionPos}`);
                         let cursorRad = this.aesthetics.cursorRadius || 5;
                         if(this.buttonState) {
                             cursorRad *= this.aesthetics.cursorZoom || 1;
@@ -366,8 +384,8 @@ export class ColorStrip extends AxisAlignedViewport {
     }
 
     posFromColor(color: Color): [number, number] | null {
-        let x = 0;
-        let y = 0;
+        let x = 0.5;
+        let y = 0.5;
         let norm = normalize(this.space, color);
         if( this.orientation == "horizontal") {
             x = norm[this.axis];
@@ -388,6 +406,71 @@ export class ColorStrip extends AxisAlignedViewport {
             norm[this.axis] = 1 - y;
         }
         return unnormalize(this.space, norm);
+    }
+    
+    overlay(ctx: CanvasRenderingContext2D, bb: [number,number,number,number]): void {
+        let x0 = bb[0],
+            y0 = bb[1],
+            w = bb[2],
+            h = bb[3];
+        // save context state
+        let ctxLineWidth = ctx.lineWidth,
+            ctxStrokeStyle = ctx.strokeStyle,
+            ctxFillStyle = ctx.fillStyle;
+        
+        ctx.lineWidth = 1;
+
+        // Draw bounding box, for debugging
+        //ctx.beginPath()
+        //ctx.rect(bb[0],bb[1],w,h);
+        //ctx.stroke();
+        
+        // Cursor
+        if( this.aesthetics.cursor === undefined || this.aesthetics.cursor == "circle" || this.aesthetics.cursor == "crosshair") {
+            const crosshairStyle = "grey";
+        
+            let selection: Color | null = this.model.space[this.space.name](this.model.selection);
+            if(selection !== null) {
+                let selectionPos: [number, number] | null = this.posFromColor(selection);
+                if( selectionPos !== null) {
+//                    console.log(`selectionPos=${selectionPos}`);
+        
+                    // crosshair
+                    if( this.aesthetics.cursor == "crosshair") {
+                        ctx.beginPath();
+                        ctx.strokeStyle = crosshairStyle;
+                        if(this.orientation == "vertical") {
+                            ctx.moveTo(x0, y0 + selectionPos[1]*h);
+                            ctx.lineTo(x0 + w, y0 + selectionPos[1]*h);
+                        } else {
+                            ctx.moveTo(x0 + selectionPos[0]*w, y0);
+                            ctx.lineTo(x0 + selectionPos[0]*w, y0 + h);
+                        }
+                        ctx.stroke();
+                    }
+                    // cursor
+                    let rgb = this.space.rgb(selection);
+                    if(rgb !== null) {
+                        let cursorRad = this.aesthetics.cursorRadius || 5;
+                        if(this.buttonState) {
+                            cursorRad *= this.aesthetics.cursorZoom || 1;
+                        }
+                                        
+                        ctx.beginPath();
+                        ctx.fillStyle = rgb2css(rgb);
+                        ctx.strokeStyle = "black 2px solid";
+                        ctx.arc(x0 + selectionPos[0]*w, y0 + selectionPos[1]*h, cursorRad, 0, 2*Math.PI);
+                        ctx.fill();
+                        ctx.stroke();
+                    }
+                }
+            }
+        }
+        
+        // restore styles
+        ctx.lineWidth = ctxLineWidth;
+        ctx.strokeStyle = ctxStrokeStyle;
+        ctx.fillStyle = ctxFillStyle;
     }
 }
 
@@ -521,7 +604,6 @@ export class ColorCircle extends AxisAlignedViewport{
                     // cursor
                     let rgb = this.space.rgb(selection);
                     if(rgb !== null) {
-                        console.log(`selectionPos=${selectionPos}`);
                         let cursorRad = this.aesthetics.cursorRadius || 5;
                         if(this.buttonState) {
                             cursorRad *= this.aesthetics.cursorZoom || 1;

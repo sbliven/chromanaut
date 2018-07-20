@@ -11,7 +11,10 @@ export function rgbPicker(canvas: HTMLCanvasElement, selection?: SelectionManage
     
     // Strip across bottom (blue)
     let aesthetics1: ViewportAesthetics = {
-        boundingBox: [0, canvas.height - stripWidth, canvas.width, stripWidth]
+        boundingBox: [0, canvas.height - stripWidth, canvas.width, stripWidth],
+        cursor: "crosshair",
+        cursorRadius: stripWidth/3,
+        cursorZoom: 1
     };
     let view1 = new ColorStrip(selection, spaces.rgb,
                                canvas, 2, 'horizontal', aesthetics1);
@@ -20,7 +23,8 @@ export function rgbPicker(canvas: HTMLCanvasElement, selection?: SelectionManage
     let aesthetics2: ViewportAesthetics = {
         boundingBox: [0, 0, canvas.width, canvas.height - stripWidth],
         cursor: "crosshair",
-        cursorZoom: 2
+        cursorRadius: 10,
+        cursorZoom: 1.5
     };
     let view2 = new ColorSlice(selection, spaces.rgb, 
                                canvas, 0, 1, aesthetics2);
@@ -40,7 +44,12 @@ export function hslPicker(canvas1: HTMLCanvasElement, selection?: SelectionManag
     let stripWidth = 15;
     
     // Strip along right side
-    let aesthetics1: ViewportAesthetics = {boundingBox: [canvas1.width-stripWidth, 0, stripWidth, canvas1.height]};
+    let aesthetics1: ViewportAesthetics = {
+        boundingBox: [canvas1.width-stripWidth, 0, stripWidth, canvas1.height],
+        cursor: "crosshair",
+        cursorRadius: stripWidth/3,
+        cursorZoom: 1
+    };
     let view1 = new ColorStrip(selection, spaces.hsl, canvas1, 2, "vertical", aesthetics1);
     
     // Circle in main part of canvas
