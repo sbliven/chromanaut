@@ -18,7 +18,9 @@ export function rgbPicker(canvas: HTMLCanvasElement, selection?: SelectionManage
     
     // Slice in main part of canvas
     let aesthetics2: ViewportAesthetics = {
-        boundingBox: [0, 0, canvas.width, canvas.height - stripWidth]
+        boundingBox: [0, 0, canvas.width, canvas.height - stripWidth],
+        cursor: "crosshair",
+        cursorZoom: 2
     };
     let view2 = new ColorSlice(selection, spaces.rgb, 
                                canvas, 0, 1, aesthetics2);
@@ -43,7 +45,11 @@ export function hslPicker(canvas1: HTMLCanvasElement, selection?: SelectionManag
     
     // Circle in main part of canvas
     let inset = 0;
-    let aesthetics2: ViewportAesthetics = {boundingBox: [inset, inset, canvas1.width-stripWidth-2*inset, canvas1.height-2*inset]};
+    let aesthetics2: ViewportAesthetics = {
+        boundingBox: [inset, inset, canvas1.width-stripWidth-2*inset, canvas1.height-2*inset],
+        cursor: "crosshair",
+        cursorZoom: 2
+    };
     let view2 = new ColorCircle(selection, spaces.hsl, canvas1, 0, 1, aesthetics2);
     return {
         "space": selection,

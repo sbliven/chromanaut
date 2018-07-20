@@ -47,6 +47,10 @@ export interface ViewportAesthetics {
     boundingBox?: [number,number,number,number];
     /// selection cursor type. Default "circle"
     cursor?: "none"|"circle"|"crosshair";
+    /// Cursor size (5px)
+    cursorRadius?: number;
+    /// Zoom cursor when clicked by this factor
+    cursorZoom?: number;
 }
 
 /**
@@ -76,6 +80,7 @@ export class Swatch implements Viewport {
  */
 abstract class AxisAlignedViewport implements Viewport {
     protected aesthetics: ViewportAesthetics;
+    protected buttonState: number;
     
     constructor(protected model: SelectionManager,
                 protected space: colorspace,
@@ -85,6 +90,7 @@ abstract class AxisAlignedViewport implements Viewport {
         canvas.addEventListener('mousemove', this.moveHandler.bind(this));
         canvas.addEventListener('click', this.clickHandler.bind(this));
         this.aesthetics = aesthetics || {};
+        this.buttonState = 0;
     }
 
     update(): void {
@@ -193,6 +199,7 @@ abstract class AxisAlignedViewport implements Viewport {
      * Handle mouse motion events
      */
     moveHandler(e: MouseEvent) {
+        this.buttonState = e.buttons;
         if( e.buttons) {
             let bb = this.getBounds(),
                 x = (e.offsetX - bb[0])/bb[2],
@@ -217,6 +224,7 @@ abstract class AxisAlignedViewport implements Viewport {
      * Handle click events
      */
     clickHandler(e: MouseEvent) {
+        this.buttonState = e.buttons;
         let bb = this.getBounds(),
             x = (e.offsetX - bb[0])/bb[2],
             y = (e.offsetY - bb[1])/bb[3];
@@ -274,6 +282,67 @@ export class ColorSlice extends AxisAlignedViewport{
         norm[this.xaxis] = x;
         norm[this.yaxis] = 1-y;
         return unnormalize(this.space, norm);
+    }
+
+    overlay(ctx: CanvasRenderingContext2D, bb: [number,number,number,number]): void {
+        let w = bb[2],
+            h = bb[3];
+        // save context state
+        let ctxLineWidth = ctx.lineWidth,
+            ctxStrokeStyle = ctx.strokeStyle,
+            ctxFillStyle = ctx.fillStyle;
+        
+        ctx.lineWidth = 1;
+
+        // Draw bounding box, for debugging
+        //ctx.beginPath()
+        //ctx.rect(bb[0],bb[1],w,h);
+        //ctx.stroke();
+        
+        // Cursor
+        if( this.aesthetics.cursor === undefined || this.aesthetics.cursor == "circle" || this.aesthetics.cursor == "crosshair") {
+            const crosshairStyle = "grey";
+        
+            let selection: Color | null = this.model.space[this.space.name](this.model.selection);
+            if(selection !== null) {
+                let selectionPos: [number, number] | null = this.posFromColor(selection);
+                if( selectionPos !== null) {
+        
+                    // crosshair
+                    if( this.aesthetics.cursor == "crosshair") {
+                        ctx.beginPath();
+                        ctx.strokeStyle = crosshairStyle;
+                        ctx.moveTo(0, selectionPos[1]*h);
+                        ctx.lineTo(w, selectionPos[1]*h);
+                        ctx.stroke();
+                        ctx.moveTo(selectionPos[0]*w, 0);
+                        ctx.lineTo(selectionPos[0]*w, h);
+                        ctx.stroke();
+                    }
+                    // cursor
+                    let rgb = this.space.rgb(selection);
+                    if(rgb !== null) {
+                        console.log(`selectionPos=${selectionPos}`);
+                        let cursorRad = this.aesthetics.cursorRadius || 5;
+                        if(this.buttonState) {
+                            cursorRad *= this.aesthetics.cursorZoom || 1;
+                        }
+                                        
+                        ctx.beginPath();
+                        ctx.fillStyle = rgb2css(rgb);
+                        ctx.strokeStyle = "black 2px solid";
+                        ctx.arc(selectionPos[0]*w, selectionPos[1]*h, cursorRad, 0, 2*Math.PI);
+                        ctx.fill();
+                        ctx.stroke();
+                    }
+                }
+            }
+        }
+        
+        // restore styles
+        ctx.lineWidth = ctxLineWidth;
+        ctx.strokeStyle = ctxStrokeStyle;
+        ctx.fillStyle = ctxFillStyle;
     }
 }
 
@@ -406,6 +475,10 @@ export class ColorCircle extends AxisAlignedViewport{
             cx = bb[0] + w/2,
             cy = bb[1] + h/2,
             r = Math.min(w,h)/2;
+        // save context state
+        let ctxLineWidth = ctx.lineWidth,
+            ctxStrokeStyle = ctx.strokeStyle,
+            ctxFillStyle = ctx.fillStyle;
         ctx.lineWidth = 1;
 
         // Draw bounding box, for debugging
@@ -414,9 +487,61 @@ export class ColorCircle extends AxisAlignedViewport{
         //ctx.stroke();
 
         // Circle boundary
-        ctx.beginPath()
+        ctx.beginPath();
+        ctx.fillStyle = "black";
         ctx.arc(cx, cy, r, 0, 2*Math.PI);
         ctx.stroke();
+        
+        // Cursor
+        if( this.aesthetics.cursor === undefined || this.aesthetics.cursor == "circle" || this.aesthetics.cursor == "crosshair") {
+            const crosshairStyle = "grey";
+        
+            let selection: Color | null = this.model.space[this.space.name](this.model.selection);
+            if(selection !== null) {
+                let selectionPos: [number, number] | null = this.posFromColor(selection);
+                if( selectionPos !== null) {
+        
+                    // crosshair
+                    if( this.aesthetics.cursor == "crosshair") {
+                        // project selection to outside of circle
+                        let vx = selectionPos[0]*w - cx,
+                            vy = selectionPos[1]*h - cy,
+                            norm = Math.sqrt(vx*vx + vy*vy),
+                            ex = vx*r/norm + cx,
+                            ey = vy*r/norm + cy;
+                        ctx.beginPath();
+                        ctx.strokeStyle = crosshairStyle;
+                        ctx.moveTo(cx, cy);
+                        ctx.lineTo(ex, ey);
+                        ctx.stroke();
+                        ctx.beginPath();
+                        ctx.arc(cx, cy, norm, 0, 2*Math.PI);
+                        ctx.stroke();
+                    }
+                    // cursor
+                    let rgb = this.space.rgb(selection);
+                    if(rgb !== null) {
+                        console.log(`selectionPos=${selectionPos}`);
+                        let cursorRad = this.aesthetics.cursorRadius || 5;
+                        if(this.buttonState) {
+                            cursorRad *= this.aesthetics.cursorZoom || 1;
+                        }
+                                        
+                        ctx.beginPath();
+                        ctx.fillStyle = rgb2css(rgb);
+                        ctx.strokeStyle = "black 2px solid";
+                        ctx.arc(selectionPos[0]*w, selectionPos[1]*h, cursorRad, 0, 2*Math.PI);
+                        ctx.fill();
+                        ctx.stroke();
+                    }
+                }
+            }
+        }
+        
+        // restore styles
+        ctx.lineWidth = ctxLineWidth;
+        ctx.strokeStyle = ctxStrokeStyle;
+        ctx.fillStyle = ctxFillStyle;
     }
 }
 
