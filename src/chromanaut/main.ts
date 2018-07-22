@@ -23,7 +23,7 @@ export function rgbPicker(canvas: HTMLCanvasElement, selection?: SelectionManage
     let aesthetics2: ViewportAesthetics = {
         boundingBox: [0, 0, canvas.width, canvas.height - stripWidth],
         cursor: "crosshair",
-        cursorRadius: 10,
+        cursorRadius: 5,
         cursorZoom: 1.5
     };
     let view2 = new ColorSlice(selection, spaces.rgb, 

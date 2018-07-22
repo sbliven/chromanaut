@@ -1,9 +1,6 @@
 import {Color} from "./color";
 import {colorspace} from "color-space";
 
-import * as cs1 from "color-space";
-export let cs = cs1;
-
 type EventTypes = "colorselected";
 
 /**
